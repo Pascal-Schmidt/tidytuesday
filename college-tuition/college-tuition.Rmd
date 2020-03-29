@@ -18,124 +18,8 @@ library(ggrepel)
 ```{r}
 tuition_cost <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-10/tuition_cost.csv') %>%
   dplyr::select(name, type, degree_length, in_state_tuition)
-tuition_income <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-10/tuition_income.csv') 
-salary_potential <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-10/salary_potential.csv')
-
-write.csv(tuition_cost, "tuition_cost.csv")
-write.csv(tuition_income, "tuition_income.csv")
-write.csv(salary_potential, "salary_potential.csv")
+tuition_income <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-10/tuition_income.csv')
 ```
-
-```{r}
-tuition_income %>%
-  dplyr::select(-c(net_cost, income_lvl)) %>%
-  dplyr::distinct() %>%
-  dplyr::group_by(name, year) %>%
-  dplyr::summarise(avg_per_year = mean(total_price, na.rm = TRUE)) %>%
-  dplyr::ungroup() %>%
-  dplyr::group_by(name) %>%
-  dplyr::arrange(name, year) %>%
-  dplyr::mutate(count = dplyr::n(),
-                p25th = stats::quantile(avg_per_year, p = 0.25),
-                p75th = stats::quantile(avg_per_year, p = 0.75),
-                difference = c(NA, diff(avg_per_year))) %>%
-  dplyr::filter(difference >= 0 | is.na(difference)) %>%
-  dplyr::mutate(count_2 = dplyr::n()) %>%
-  dplyr::filter(count == count_2) %>%
-  dplyr::mutate(variance = var(avg_per_year, na.rm = TRUE)) %>%
-  dplyr::filter(count_2 >= 4) %>%
-  dplyr::arrange(desc(variance)) %>%
-  dplyr::ungroup() %>%
-  dplyr::inner_join(tuition_cost %>%
-                      dplyr::select(type, name), by = "name") %>%
-  dplyr::filter(stringr::str_detect(name, { unique(.$name)[1:10] } %>%
-                                      paste0(collapse = "|"))) %>%
-  dplyr::mutate(name = forcats::fct_reorder(name, avg_per_year)) %>%
-  ggplot(aes(x = name, y = avg_per_year, col = type)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = p25th, ymax = p75th)) +
-  expand_limits(y = 5000) +
-  coord_flip() +
-  theme_minimal() +
-  scale_y_continuous(labels = scales::dollar_format()) +
-  ylab("Tuition Cost") +
-  xlab("")
-```
-
-
-```{r}
-tuition_income %>%
-  dplyr::select(-c(net_cost, income_lvl)) %>%
-  dplyr::distinct() %>%
-  dplyr::group_by(name, year) %>%
-  dplyr::summarise(avg_per_year = mean(total_price, na.rm = TRUE)) %>%
-  dplyr::ungroup() %>%
-  dplyr::group_by(name) %>%
-  dplyr::arrange(name, year) %>%
-  dplyr::mutate(count = dplyr::n(),
-                p25th = stats::quantile(avg_per_year, p = 0.25),
-                p75th = stats::quantile(avg_per_year, p = 0.75),
-                difference = c(NA, diff(avg_per_year))) %>%
-  dplyr::filter(difference >= 0 | is.na(difference)) %>%
-  dplyr::mutate(count_2 = dplyr::n()) %>%
-  dplyr::filter(count == count_2) %>%
-  dplyr::mutate(variance = var(avg_per_year, na.rm = TRUE)) %>%
-  dplyr::filter(count_2 >= 4) %>%
-  dplyr::arrange(desc(variance)) %>%
-  dplyr::ungroup() %>%
-  dplyr::filter(stringr::str_detect(name, { unique(.$name)[1:10] } %>%
-                                      paste0(collapse = "|"))) %>%
-  dplyr::mutate(name = forcats::fct_reorder(name, avg_per_year)) %>%
-  ggplot(aes(x = name, y = avg_per_year)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = p25th, ymax = p75th)) +
-  expand_limits(y = 5000) +
-  coord_flip() +
-  theme_minimal() +
-  scale_y_continuous(labels = scales::dollar_format()) +
-  ylab("Tuition Cost") +
-  xlab("")
-```
-
-```{r}
-tuition_income %>%
-  dplyr::select(-c(net_cost, income_lvl)) %>%
-  dplyr::distinct() %>%
-  dplyr::group_by(name, year) %>%
-  dplyr::summarise(avg_per_year = mean(total_price, na.rm = TRUE)) %>%
-  dplyr::ungroup() %>%
-  dplyr::group_by(name) %>%
-  dplyr::arrange(name, year) %>%
-  dplyr::mutate(count = dplyr::n(),
-                p25th = stats::quantile(avg_per_year, p = 0.25),
-                p75th = stats::quantile(avg_per_year, p = 0.75),
-                difference = c(NA, diff(avg_per_year))) %>%
-  dplyr::filter(difference >= 0 | is.na(difference)) %>%
-  dplyr::mutate(count_2 = dplyr::n()) %>%
-  dplyr::filter(count == count_2) %>%
-  dplyr::mutate(variance = var(avg_per_year, na.rm = TRUE)) %>%
-  dplyr::filter(count_2 >= 4) %>%
-  dplyr::ungroup() %>%
-  dplyr::inner_join(tuition_cost %>%
-                      dplyr::select(type, name), by = "name") %>%
-  dplyr::group_split(type) %>%
-  purrr::map(~ dplyr::arrange(., desc(variance))) %>%
-  purrr::map(~ dplyr::filter(., stringr::str_detect(name, { unique(.$name)[1:3] } %>%
-                                                      paste0(collapse = "|")))) %>%
-  base::do.call(rbind, .) %>%
-  dplyr::mutate(name = forcats::fct_reorder(name, avg_per_year)) %>%
-  ggplot(aes(x = name, y = avg_per_year, col = type)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = p25th, ymax = p75th)) +
-  expand_limits(y = 5000) +
-  coord_flip() +
-  theme_minimal() +
-  scale_y_continuous(labels = scales::dollar_format()) +
-  ylab("Tuition Cost") +
-  xlab("") +
-  theme(legend.position = "bottom")
-```
-
 
 ```{r fig.height = 6, fig.width = 8}
 tuition_income %>%
@@ -159,19 +43,21 @@ tuition_income %>%
   dplyr::group_split(type) %>%
   purrr::map(~ dplyr::arrange(., desc(variance))) %>%
   purrr::map(~ dplyr::filter(., stringr::str_detect(name, { unique(.$name)[1:3] } %>%
-                                                      paste0(collapse = "|"))))
+                                                      paste0(collapse = "|")))) %>%
   purrr::map(~ dplyr::group_by(., name)) %>%
   purrr::map(~ dplyr::mutate(., change_in_price = (dplyr::last(avg_per_year) - avg_per_year[1]) / avg_per_year[1])) %>%
   base::do.call(rbind, .) %>%
   dplyr::ungroup() %>%
+  dplyr::filter(name != "Loyola Marymount University") %>%
   dplyr::mutate(name = forcats::fct_reorder(name, avg_per_year),
                 date = lubridate::ymd(year, truncated = 2L)) -> line_chart
 
 line_chart %>%
   dplyr::group_by(name) %>%
   dplyr::summarise_all(~ max(.)) -> df_text
+```
 
-
+```{r}
 ggplot(line_chart) + 
   geom_point(aes(x = date, y = avg_per_year, col = name)) +
   geom_line(aes(x = date, y = avg_per_year, col = name)) +
@@ -195,27 +81,6 @@ ggplot(line_chart) +
 
 
 ggsave("line_chart.jpeg", height = 6, width = 12)
-```
-
-```{r}
-salary_potential %>%
-  dplyr::select(name, state_name, mid_career_pay, stem_percent) %>%
-  dplyr::inner_join(tuition_cost, by = "name") %>%
-  dplyr::filter(degree_length == "4 Year") %>%
-  dplyr::mutate(best = mid_career_pay / in_state_tuition) %>%
-  dplyr::arrange(desc(best)) -> salary
-  
-ggplot(salary, aes(x = mid_career_pay, y = in_state_tuition)) +
-  geom_point(aes(col = type)) +
-  geom_text_repel(data = salary %>%
-                    dplyr::group_by(type) %>%
-                    dplyr::top_n(1),
-                  segment.size  = 0.9,
-                  hjust = 1,
-                  arrow = arrow(length = unit(0.03, "npc"), 
-                                type = "closed", ends = "first"),
-                  force = 10,
-                  aes(label = name))
 ```
 
 
