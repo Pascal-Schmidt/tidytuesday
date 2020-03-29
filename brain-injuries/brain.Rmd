@@ -1,0 +1,71 @@
+---
+title: "Brain-Injuries"
+author: "Pascal Schmidt"
+date: "March 24, 2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(tidytuesdayR)
+library(ggthemr)
+ggthemr("dust")
+```
+
+```{r}
+tbi_age <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-24/tbi_age.csv')
+```
+
+```{r}
+tbi_age %>%
+  dplyr::select(type, injury_mechanism, age_group, number_est) %>%
+  tidyr::pivot_wider(names_from = age_group, values_from = number_est) %>%
+  dplyr::mutate(Total = as.character(Total)) %>%
+  dplyr::mutate(total_2 = purrr::pmap_dbl(dplyr::select_if(., is.numeric), sum, na.rm = TRUE)) %>%
+  dplyr::mutate(`15-17` = `0-17` - `0-4` - `5-14`,
+                `5-17` = `0-17` - `0-4`,
+                `18-24` = `15-24` - `15-17`) %>%
+  dplyr::select(-c(`0-17`,`5-14`, `15-24`, `15-17`)) %>%
+  dplyr::mutate(total_2 = as.character(total_2)) %>%
+  dplyr::mutate(total_3 = purrr::pmap_dbl(dplyr::select_if(., is.numeric), sum, na.rm = TRUE)) %>%
+  dplyr::select(-c(Total, total_2)) %>%
+  tidyr::pivot_longer(-c(type, injury_mechanism), names_to = "age_group", values_to = "number_est") %>%
+  na.omit() -> tidy_age 
+```
+
+```{r fig.height = 8, fig.width = 10}
+tidy_age %>%
+  dplyr::filter(age_group != "total_3") %>%
+  dplyr::mutate(injury_mechanism = ifelse(stringr::str_detect(injury_mechanism, "Other"), 
+                                          "Other", injury_mechanism)) %>%
+  dplyr::group_by(type, age_group) %>%
+  dplyr::mutate(sum_injury = sum(number_est),
+                prop = round(number_est / sum_injury, 4)) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(age_group = factor(age_group, 
+                                   levels = c("0-4", "5-17", "18-24", "25-34", 
+                                              "35-44", "45-54", "55-64", "65-74", "75+"))) -> tidy_df
+
+ggplot(tidy_df, aes(x = age_group, y = prop, fill = forcats::fct_reorder(injury_mechanism, prop))) +
+  geom_bar(stat = "identity", alpha = 0.75) +
+  theme(legend.position = "bottom",
+        legend.text  = element_text(colour = "gray48", size = 12, face = "bold"),
+        legend.title = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 20, colour = "black"),
+        axis.ticks.x = element_line(size = 12, colour = "gray48"),
+        axis.text = element_text(size = 12, color = "gray48"),
+        strip.text.x = element_text(size = 15, colour = "gray48")) +
+  scale_y_continuous(label = scales::percent_format()) +
+  ggtitle("Cause of Injuries by Age Group") +
+  facet_wrap(~ type, nrow = 3) +
+  labs(x = "",
+       y = "",
+       caption = "Code on https://thatdatatho.com/")
+
+ggsave("brain.jpeg", height = 6, width = 8)
+```
+
