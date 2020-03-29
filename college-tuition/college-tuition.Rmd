@@ -75,7 +75,7 @@ ggplot(line_chart) +
   scale_y_continuous(labels = scales::dollar_format()) +
   ylab("Tuition") +
   xlab("Year") +
-  ggtitle("Top 9 Universities With the Most Tuition Increase Over Time") +
+  ggtitle("Top 3 Universities From Each Type (Public, Private, For Profit) \n With the Most Tuition Increase Over Time") +
   guides(col = guide_legend(nrow = 3, byrow = TRUE)) +
   scale_color_brewer(palette = "Set1")
 
