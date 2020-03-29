@@ -66,6 +66,6 @@ ggplot(tidy_df, aes(x = age_group, y = prop, fill = forcats::fct_reorder(injury_
        y = "",
        caption = "Code on https://thatdatatho.com/")
 
-ggsave("brain.jpeg", height = 6, width = 8)
+ggsave("brain.jpeg", height = 4, width = 6)
 ```
 
