@@ -2,7 +2,7 @@
 title: "Untitled"
 author: "Pascal Schmidt"
 date: "April 27, 2020"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -18,6 +18,7 @@ library(ggimage)
 ```{r}
 tuesdata <- tidytuesdayR::tt_load("2020-04-28")
 gross <- tuesdata$grosses
+head(gross)
 ```
 
 ```{r}
@@ -27,16 +28,22 @@ gross %>%
   purrr::map(~ purrr::head_while(.$pct_capacity, ~ . >= 1)) %>%
   purrr::map(~ length(.)) -> most_hyped
 
+head(most_hyped)
+
 gross %>%
   dplyr::group_split(show) %>%
   purrr::map2(., most_hyped, ~ .x[1:.y, ]) %>%
   do.call(rbind, .) -> most_hyped
+
+head(most_hyped)
 
 most_hyped %>%
   dplyr::count(show, sort = TRUE) %>%
   dplyr::arrange(desc(n)) %>%
   .[1:10, ] %>%
   dplyr::mutate(months = round(n / 52 * 12, 2)) -> top_ten
+
+top_ten
 
 images <- list.files()[stringr::str_detect(list.files(), pattern = ".*png")]
 
@@ -54,6 +61,8 @@ path <- paste0(here::here(), "/", path)
 top_ten %>%
   dplyr::bind_cols(dplyr::as_tibble(path)) %>%
   dplyr::mutate(show = forcats::fct_reorder(show, n, .desc = TRUE)) -> top_ten
+
+top_ten
 
 top_ten %>%
   dplyr::mutate(alpha = c(1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1)) -> top_ten
@@ -80,7 +89,7 @@ ggplot(top_ten, aes(x = show, y = months)) +
   ylab("Months") +
   labs(
     title = "Top Ten of the Most Initially Hyped Musicals",
-    subtitle = "For How Many Consecutive Performances After Premiering Were Musicals Sold Out?"
+    subtitle = "For How Many Consecutive Months After Premiering Were Musicals Sold Out?"
   ) +
   annotate("curve", x = 4, y = 50, xend = 1.5, yend = 60, curvature = 0.3, arrow = arrow(length = unit(3, "mm")), color = "#DAA520") +
   annotate("text",
