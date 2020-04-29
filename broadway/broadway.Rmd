@@ -1,0 +1,103 @@
+---
+title: "Untitled"
+author: "Pascal Schmidt"
+date: "April 27, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(tidytuesdayR)
+library(png)
+library(grid)
+library(ggimage)
+```
+
+```{r}
+tuesdata <- tidytuesdayR::tt_load("2020-04-28")
+gross <- tuesdata$grosses
+```
+
+```{r}
+gross %>%
+  dplyr::group_split(show) %>%
+  purrr::map(~ dplyr::arrange(., week_ending)) %>%
+  purrr::map(~ purrr::head_while(.$pct_capacity, ~ . >= 1)) %>%
+  purrr::map(~ length(.)) -> most_hyped
+
+gross %>%
+  dplyr::group_split(show) %>%
+  purrr::map2(., most_hyped, ~ .x[1:.y, ]) %>%
+  do.call(rbind, .) -> most_hyped
+
+most_hyped %>%
+  dplyr::count(show, sort = TRUE) %>%
+  dplyr::arrange(desc(n)) %>%
+  .[1:10, ] %>%
+  dplyr::mutate(months = round(n / 52 * 12, 2)) -> top_ten
+
+images <- list.files()[stringr::str_detect(list.files(), pattern = ".*png")]
+
+path <- vector(mode = "character", length = nrow(top_ten))
+for (i in 1:nrow(top_ten)) {
+  index <- which(grepl(
+    pattern = stringr::str_remove(images[i], "\\.png"),
+    top_ten$show, ignore.case = TRUE
+  ))
+  path[index] <- images[i]
+}
+
+path <- paste0(here::here(), "/", path)
+
+top_ten %>%
+  dplyr::bind_cols(dplyr::as_tibble(path)) %>%
+  dplyr::mutate(show = forcats::fct_reorder(show, n, .desc = TRUE)) -> top_ten
+
+top_ten %>%
+  dplyr::mutate(alpha = c(1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1)) -> top_ten
+
+
+ggplot(top_ten, aes(x = show, y = months)) +
+  geom_col(fill = "#DAA520", aes(alpha = alpha)) +
+  geom_image(aes(image = value, y = months + 4.5), size = 0.085) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "black"),
+    panel.background = element_rect(fill = "black"),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks = element_blank(),
+    axis.line = element_blank(),
+    axis.text.y = element_text(color = "#e5e4e2"),
+    axis.title.y = element_text(color = "#e5e4e2"),
+    plot.subtitle = element_text(color = "#e5e4e2", hjust = 0.5, size = 12),
+    plot.title = element_text(color = "#e5e4e2", hjust = 0.5, size = 16),
+    legend.position = "none"
+  ) +
+  ylab("Months") +
+  labs(
+    title = "Top Ten of Most Hyped Musicals",
+    subtitle = "For How Many Consecutive Performances After Premiering Were Musicals Sold Out?"
+  ) +
+  annotate("curve", x = 4, y = 50, xend = 1.5, yend = 60, curvature = 0.3, arrow = arrow(length = unit(3, "mm")), color = "#DAA520") +
+  annotate("text",
+    x = 5,
+    y = 45,
+    label = "Hamilton has been sold out since its first preview \non July 19th 2015 for every single performance. \nWhen will there ever be a performance that is not sold out???",
+    color = "#DAA520"
+  )
+
+ggsave("broadway.jpeg", width = 10)
+```
+
+```{r}
+gross %>%
+  dplyr::filter(show == "Hamilton") %>%
+  View()
+```
+
