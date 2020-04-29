@@ -12,8 +12,6 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```{r}
 library(tidyverse)
 library(tidytuesdayR)
-library(png)
-library(grid)
 library(ggimage)
 ```
 
@@ -92,12 +90,6 @@ ggplot(top_ten, aes(x = show, y = months)) +
     color = "#DAA520"
   )
 
-ggsave("broadway.jpeg", width = 10)
-```
-
-```{r}
-gross %>%
-  dplyr::filter(show == "Hamilton") %>%
-  View()
+ggsave("final/broadway.jpeg", width = 10)
 ```
 
