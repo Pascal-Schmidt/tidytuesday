@@ -79,14 +79,14 @@ ggplot(top_ten, aes(x = show, y = months)) +
   ) +
   ylab("Months") +
   labs(
-    title = "Top Ten of Most Hyped Musicals",
+    title = "Top Ten of the Most Initially Hyped Musicals",
     subtitle = "For How Many Consecutive Performances After Premiering Were Musicals Sold Out?"
   ) +
   annotate("curve", x = 4, y = 50, xend = 1.5, yend = 60, curvature = 0.3, arrow = arrow(length = unit(3, "mm")), color = "#DAA520") +
   annotate("text",
     x = 5,
     y = 45,
-    label = "Hamilton has been sold out since its first preview \non July 19th 2015 for every single performance. \nWhen will there ever be a performance that is not sold out???",
+    label = "Hamilton has been sold out since its first preview \non July 19th 2015 for every single performance. \nWill there ever be a performance that is not sold out???",
     color = "#DAA520"
   )
 
